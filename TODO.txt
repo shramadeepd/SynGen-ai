@@ -1,0 +1,4 @@
+backend - fast api , jwt , 
+db - redis , postgres , chroma , pg vector 
+rag -0 agno 
+frontend - vue js , tailwind 
