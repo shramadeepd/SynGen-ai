@@ -1,7 +1,7 @@
 import { ref, onMounted, watch } from 'vue'
 import ChatHeader from '../components/ChatHeader.vue'
-import ChatInput from '../components/ChatInput.vue'
-import ChatMessage from '../components/ChatMessage.vue'
+import ChatInput from '../components/ChatWindow/ChatInput.vue'
+import ChatMessage from '../components/ChatWindow/ChatMessage.vue'
 import { useChat } from '../hooks/useChat'
 
 const Index = {
@@ -29,11 +29,11 @@ const Index = {
     }
   },
   template: `
-    <div class="flex flex-col h-screen bg-gray-50">
+    <div class="flex flex-col h-screen ">
       <ChatHeader />
       
       <!-- Chat messages area -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <div class="flex-1 overflow-y-auto ">
         <div v-if="messages.length === 0" class="flex items-center justify-center h-full">
           <div class="text-center space-y-4">
             <h2 class="text-2xl font-semibold text-gray-700">Welcome to BusinessAI</h2>
@@ -50,17 +50,19 @@ const Index = {
           />
         </template>
         <ChatMessage
-          v-if="isLoading"
-          message=""
-          :isUser="false"
-          :isLoading="true"
-          :timestamp="new Date()"
-        />
+            v-for="(message, index) in messages"
+            :key="index"
+            :message="message.content"
+            :isUser="message.isUser"
+            :timestamp="message.timestamp"
+            :isLoading="false"
+          />
+
         <div ref="messagesEndRef" />
       </div>
       
       <!-- Input area -->
-      <div class="border-t border-gray-200 p-4">
+      <div class="border-t border-gray-300 p-4 bg-white">
         <ChatInput :onSendMessage="sendMessage" :isLoading="isLoading" />
       </div>
     </div>

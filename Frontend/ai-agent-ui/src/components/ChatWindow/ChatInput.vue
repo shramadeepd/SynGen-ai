@@ -1,26 +1,27 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="flex space-x-2">
-    <input
-      type="text"
-      v-model="message"
-      placeholder="Ask something about your business..."
-      class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      :disabled="isLoading"
-    />
-    <button
-      type="submit"
-      :disabled="!message.trim() || isLoading"
-      class="bg-blue-600 text-white rounded-lg p-2 hover:bg-blue-700 transition-colors"
-      :class="{'opacity-50 cursor-not-allowed': !message.trim() || isLoading}"
-    >
-      <Send size="20" />
-    </button>
-  </form>
+  <div class="input-wrapper">
+    <form @submit.prevent="handleSubmit" class="flex items-center space-x-2 w-full max-w-2xl">
+      <input
+        type="text"
+        v-model="message"
+        placeholder="Ask something about your business..."
+        class="w-full text-xl border border-gray-300 rounded-xl px-8 py-5 text-black bg-white min-h-[64px"
+        :disabled="isLoading"
+      />
+      <button
+        type="submit"
+        :disabled="!message.trim() || isLoading"
+        class="bg-blue-500 text-white px-4 py-2 rounded-md"
+      >
+        <Send size="24" />
+      </button>
+    </form>
+  </div>
 </template>
 
 <script>
 import { ref } from 'vue';
-import { Send } from 'lucide-vue-next'; // Update the import path if necessary
+import { Send } from 'lucide-vue-next';
 
 export default {
   props: {
@@ -50,3 +51,32 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.input-wrapper {
+  display: flex;
+  padding: 1rem;
+  background-color: transparent; /* For testing visibility - adjust as needed */
+  border-top: 1px solid #333;
+  align-items: center;
+  justify-content: center;
+}
+
+input {
+  flex: 1;
+  padding: 1rem 1rem;         /* Increased padding */
+  font-size: 1rem;           /* Increased font size */
+  border-radius: 16px;          /* More rounded */
+  border: 2px solid #333;
+  min-height: 40px;             /* Taller box */
+  width: 120%;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+
+input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+}
+</style>

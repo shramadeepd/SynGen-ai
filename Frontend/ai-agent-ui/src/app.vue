@@ -1,57 +1,37 @@
-<!-- <template>
-  <div id="app">
-    <HeaderBar />
-    <ChatInput />
-    <ChatMessage />
-    <LoadingDots />
-    <h1>Hello from Vue!</h1>
-  </div>
-</template>
-
-<script setup>
-// Add any logic or imports here
-import HeaderBar from './components/HeaderBar.vue'
-import ChatInput from './components/ChatWindow/ChatInput.vue'
-import ChatMessage from './components/ChatWindow/ChatMessage.vue'
-import LoadingDots from './components/ChatWindow/LoadingDots.vue'
-</script>
-
-<style scoped>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  padding: 2rem;
-}
-</style> -->
-
 <template>
   <div id="app">
     <HeaderBar />
-    <div class="chat-container">
-      <div v-if="messages.length === 0" class="empty-state">
-        <p>Start a conversation with BusinessAI</p>
-      </div>
-      <div v-else class="messages-container">
-        <ChatMessage 
-          v-for="(msg, index) in messages" 
-          :key="index"
-          :message="msg.content"
-          :isUser="msg.isUser"
-          :timestamp="msg.timestamp"
+
+    <div class="main-layout">
+      <!-- Sidebar: ChatHistory -->
+      <ChatHistory />
+
+      <!-- Main Chat Content -->
+      <div class="chat-content">
+        <!-- Messages container -->
+        <div class="messages-container">
+          <div v-if="messages.length === 0" class="empty-state">
+            <p>Start a conversation with BusinessAI</p>
+          </div>
+          <div v-else>
+            <ChatMessage
+              v-for="(msg, idx) in messages"
+              :key="idx"
+              :message="msg.content"
+              :isUser="msg.isUser"
+              :timestamp="msg.timestamp"
+            />
+          </div>
+        </div>
+        <!-- Chat Input at the bottom -->
+        <div class=""chat-input>
+        <ChatInput
+          :onSendMessage="sendMessage"
+          :isLoading="isLoading"
         />
-      </div>
-      <div v-if="isLoading" class="loading-container">
-        <ChatMessage 
-          message=""
-          :isUser="false"
-          :isLoading="true"
-          :timestamp="new Date()"
-        />
+        </div>
       </div>
     </div>
-    <ChatInput 
-      :onSendMessage="sendMessage"
-      :isLoading="isLoading"
-    />
   </div>
 </template>
 
@@ -60,44 +40,62 @@ import { useChat } from './hooks/Usehooks.js'
 import HeaderBar from './components/HeaderBar.vue'
 import ChatInput from './components/ChatWindow/ChatInput.vue'
 import ChatMessage from './components/ChatWindow/ChatMessage.vue'
-import LoadingDots from './components/ChatWindow/LoadingDots.vue'
+import ChatHistory from './components/ChatWindow/ChatHistory.vue'
 
 const { messages, isLoading, sendMessage } = useChat()
 </script>
 
 <style scoped>
+/* Base app styles */
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
   height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  /* box-sizing: border-box; */
 }
 
-.chat-container {
+/* Layout: side-by-side sidebar and main chat content */
+.main-layout {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+/* Sidebar styling is handled in ChatHistory */
+ 
+/* Chat content (messages and input) */
+.chat-content {
+  height: 80%;
   flex: 1;
-  overflow-y: auto;
-  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  /* background: rgba(30, 41, 59, 0.7); */
+  background: transparent;
+  color: #fff;
 }
 
+/* Make messages container scrollable */
+.messages-container {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+/* Centered empty state message */
 .empty-state {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100%;
-  color: #888;
+  font-size: 1.2rem;
+  color: #ddd;
 }
 
-.messages-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.loading-container {
-  margin-top: 1rem;
+.chat-input {
+  border-top: 1px solid #ccc;
+  padding: 1rem;
+  background-color: #fff;
 }
 </style>

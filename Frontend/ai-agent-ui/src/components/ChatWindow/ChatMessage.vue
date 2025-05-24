@@ -48,7 +48,7 @@ export default {
       default: false
     },
     timestamp: {
-      type: Date,
+      type: [String,Date],
       required: true
     }
   },
@@ -59,3 +59,28 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.message {
+  padding: 1rem 1.5rem;
+  margin: 1rem;
+  border-radius: 14px;
+  max-width: 75%;
+  word-wrap: break-word;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.message.user {
+  background-color: transparent;
+  align-self: flex-end;
+  color: rgb(176, 16, 16);
+}
+
+.message.bot {
+  background-color: #2121d9;
+  align-self: flex-start;
+  color: #078d28;
+}
+
+</style>
