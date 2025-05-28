@@ -11,16 +11,53 @@ import logging
 import time
 from services.ai.unified_query_service import UnifiedQueryService
 from pydantic import BaseModel
+from contextlib import asynccontextmanager
+
+# Import managers early for lifespan
+from services.database.postgres_manager import postgres_manager, mongodb_manager
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Lifespan context manager for application startup and shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Initialize PostgreSQL pool
+    logger.info("Initializing PostgreSQL connection pool...")
+    await postgres_manager.initialize_pool()
+    logger.info("PostgreSQL connection pool initialized.")
+    
+    # Startup: Connect to MongoDB
+    logger.info("Connecting to MongoDB...")
+    try:
+        mongodb_manager.connect() # This is synchronous
+        logger.info("MongoDB connection established.")
+    except Exception as mongo_e:
+        logger.error(f"Failed to connect to MongoDB during startup: {mongo_e}")
+
+    yield # Application runs here
+
+    # Shutdown: Close PostgreSQL pool
+    logger.info("Closing PostgreSQL connection pool...")
+    await postgres_manager.close_pool()
+    logger.info("PostgreSQL connection pool closed.")
+    
+    # Shutdown: Close MongoDB client
+    logger.info("Closing MongoDB connection...")
+    if hasattr(mongodb_manager, 'close') and callable(mongodb_manager.close):
+        mongodb_manager.close()
+        logger.info("MongoDB connection closed.")
+    else:
+        logger.info("MongoDBManager does not have a close method or it's not callable.")
+
+
 # Initialize the app
 app = FastAPI(
     title="SynGen AI API",
     description="AI-powered supply chain analytics platform with real data",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan # Use the lifespan manager
 )
 
 # Add CORS middleware
@@ -38,29 +75,7 @@ try:
     logger.info("✅ Unified Query Service initialized successfully")
 except Exception as e:
     logger.error(f"❌ Failed to initialize query service: {e}")
-    raise
-
-# Initialize database connections
-try:
-    from services.database.postgres_manager import postgres_manager, mongodb_manager
-    import asyncio
-    
-    # Initialize PostgreSQL connection pool
-    async def init_db():
-        await postgres_manager.initialize_pool()
-        
-    # Run database initialization
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(init_db())
-    loop.close()
-    
-    # Initialize MongoDB connection
-    mongodb_manager.connect()
-    
-    logger.info("✅ Database connections initialized successfully")
-except Exception as e:
-    logger.error(f"❌ Failed to initialize database connections: {e}")
+    # Decide if you want to raise here or let lifespan handle it
 
 # Initialize agentic team system as fallback
 try:

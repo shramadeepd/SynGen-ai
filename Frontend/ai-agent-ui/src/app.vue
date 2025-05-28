@@ -88,7 +88,7 @@ import {
   ChartBarIcon,
   DocumentTextIcon,
   CogIcon,
-  LogOutIcon
+  ArrowLeftOnRectangleIcon as LogOutIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()

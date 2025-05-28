@@ -41,3 +41,8 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
 pythonpath = ["Backend"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["Backend", "Backend.*"]
+exclude = ["Frontend", "Frontend.*"]
