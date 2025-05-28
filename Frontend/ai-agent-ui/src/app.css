@@ -1,0 +1,25 @@
+/* app.css */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #0f0f10;
+  color: #d709b1;
+  height: 100vh;
+  /* overflow: hidden; */
+}
+
+* {
+  box-sizing: border-box;
+}
+s
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
