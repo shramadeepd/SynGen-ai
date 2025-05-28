@@ -1,0 +1,1398 @@
+[
+    {
+        "question_id": 1,
+        "question": "What is the total sales amount for all orders?",
+        "status": "FAIL",
+        "details": "Flaw: Response is a dictionary but missing the 'answer' key.",
+        "response": {
+            "sql": "SELECT ROUND(SUM(oi.sales), 2) AS total_sales_amount\nFROM order_items oi\nJOIN orders o ON oi.order_id = o.order_id\nWHERE o.order_status != 'CANCELED'\nLIMIT 1",
+            "rows": [
+                {
+                    "total_sales_amount": 36040364.61
+                }
+            ],
+            "row_count": 1,
+            "execution_time": 0.6688833236694336,
+            "explanation": "Query executed successfully and returned 1 rows.",
+            "type": "sql_query",
+            "validation_confidence": 0.9,
+            "cost_estimate": 40,
+            "warnings": [
+                "Remove the JOIN with orders table if order_status is not needed",
+                "Remove the LIMIT 1 clause as it's not necessary for an aggregate function",
+                "Consider adding an index on order_items.order_id if not already present",
+                "If order_status check is necessary, consider moving it to a subquery or using EXISTS"
+            ],
+            "validation_level": "moderate"
+        }
+    },
+    {
+        "question_id": 2,
+        "question": "What is our company's definition of slow-moving inventory according to the Inventory Management policy?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "No relevant policy documents found for your question.",
+            "sources": [],
+            "type": "policy_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 3,
+        "question": "What are the required steps for handling obsolete inventory write-offs?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "No relevant policy documents found for your question.",
+            "sources": [],
+            "type": "policy_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 4,
+        "question": "What sustainability practices should our logistics partners follow according to our Environmental Sustainability policy?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "No relevant policy documents found for your question.",
+            "sources": [],
+            "type": "policy_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 5,
+        "question": "What criteria do we use to qualify new suppliers based on our Supplier Selection policy?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "No relevant policy documents found for your question.",
+            "sources": [],
+            "type": "policy_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 6,
+        "question": "How does our Returns and Reverse Logistics policy handle customer claims for damaged products?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "No relevant policy documents found for your question.",
+            "sources": [],
+            "type": "policy_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 7,
+        "question": "What are the key performance indicators for measuring supplier performance as defined in our Performance Measurement policy?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "No relevant policy documents found for your question.",
+            "sources": [],
+            "type": "policy_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 8,
+        "question": "What cyber security measures must be implemented to protect supply chain data according to our Data Security policy?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "No relevant policy documents found for your question.",
+            "sources": [],
+            "type": "policy_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 9,
+        "question": "What was the total sales amount for the Southwest region in the last quarter?",
+        "status": "FAIL",
+        "details": "Flaw: Response is a dictionary but missing the 'answer' key.",
+        "response": {
+            "sql": "SELECT \n    COALESCE(SUM(oi.sales), 0) AS total_sales_amount\nFROM \n    orders o\nJOIN \n    order_items oi ON o.order_id = oi.order_id\nWHERE \n    o.order_region = 'Southwest'\n    AND o.order_date >= date('now', '-3 months')\n    AND o.order_date < date('now')\nLIMIT 1",
+            "rows": [
+                {
+                    "total_sales_amount": 0
+                }
+            ],
+            "row_count": 1,
+            "execution_time": 0.18251490592956543,
+            "explanation": "Query executed successfully and returned 1 rows.",
+            "type": "sql_query",
+            "validation_confidence": 0.9,
+            "cost_estimate": 40,
+            "warnings": [
+                "Remove LIMIT 1 clause",
+                "Consider using parameterized queries for the region",
+                "Use indexed date columns if available instead of date() function",
+                "Add error handling for cases where the join might produce no results",
+                "Consider adding an index on order_region and order_date if not already present"
+            ],
+            "validation_level": "moderate"
+        }
+    },
+    {
+        "question_id": 10,
+        "question": "Which products have the highest profit margin across all categories?",
+        "status": "FAIL",
+        "details": "Flaw: Response is a dictionary but missing the 'answer' key.",
+        "response": {
+            "sql": "SELECT \n    p.product_id,\n    p.product_name,\n    p.category_name,\n    AVG(oi.profit_ratio) AS avg_profit_ratio\nFROM \n    products p\nJOIN \n    order_items oi ON p.product_id = oi.product_id\nGROUP BY \n    p.product_id, p.product_name, p.category_name\nHAVING \n    AVG(oi.profit_ratio) IS NOT NULL\nORDER BY \n    avg_profit_ratio DESC\nLIMIT 10",
+            "rows": [
+                {
+                    "product_id": 306,
+                    "product_name": "Polar FT4 Heart Rate Monitor",
+                    "category_name": "Kids' Golf Clubs",
+                    "avg_profit_ratio": 0.23983333365
+                },
+                {
+                    "product_id": 226,
+                    "product_name": "Bowflex SelectTech 1090 Dumbbells",
+                    "category_name": "Fitness Accessories",
+                    "avg_profit_ratio": 0.2329999953
+                },
+                {
+                    "product_id": 58,
+                    "product_name": "Diamondback Boys' Insight 24 Performance Hybr",
+                    "category_name": "Basketball",
+                    "avg_profit_ratio": 0.22551724331034484
+                },
+                {
+                    "product_id": 24,
+                    "product_name": "Elevation Training Mask 2.0",
+                    "category_name": "Soccer",
+                    "avg_profit_ratio": 0.19405405294594594
+                },
+                {
+                    "product_id": 691,
+                    "product_name": "MDGolf Pittsburgh Penguins Putter",
+                    "category_name": "Women's Golf Clubs",
+                    "avg_profit_ratio": 0.19226414898113206
+                },
+                {
+                    "product_id": 743,
+                    "product_name": "Ogio Race Golf Shoes",
+                    "category_name": "Golf Bags & Carts",
+                    "avg_profit_ratio": 0.19147540927868853
+                },
+                {
+                    "product_id": 777,
+                    "product_name": "Bag Boy M330 Push Cart",
+                    "category_name": "Golf Gloves",
+                    "avg_profit_ratio": 0.1844927541594203
+                },
+                {
+                    "product_id": 666,
+                    "product_name": "Merrell Men's All Out Flash Trail Running Sho",
+                    "category_name": "Men's Golf Clubs",
+                    "avg_profit_ratio": 0.17658823412941177
+                },
+                {
+                    "product_id": 35,
+                    "product_name": "adidas Brazuca 2014 Official Match Ball",
+                    "category_name": "Baseball & Softball",
+                    "avg_profit_ratio": 0.17553845946153845
+                },
+                {
+                    "product_id": 677,
+                    "product_name": "TaylorMade White Smoke IN-12 Putter",
+                    "category_name": "Women's Golf Clubs",
+                    "avg_profit_ratio": 0.16920634863492065
+                }
+            ],
+            "row_count": 10,
+            "execution_time": 0.49658799171447754,
+            "explanation": "Query executed successfully and returned 10 rows.",
+            "type": "sql_query",
+            "validation_confidence": 0.9,
+            "cost_estimate": 60,
+            "warnings": [
+                "Consider adding an index on products.product_id and order_items.product_id if not already present",
+                "Use COALESCE or IFNULL to handle potential NULL values in profit_ratio",
+                "Consider adding a WHERE clause to filter out any irrelevant data before the GROUP BY",
+                "Analyze the execution plan to ensure efficient use of indexes",
+                "Consider partitioning the order_items table if it's very large",
+                "Use EXPLAIN to verify query performance and optimize if necessary"
+            ],
+            "validation_level": "moderate"
+        }
+    },
+    {
+        "question_id": 11,
+        "question": "Which shipping mode has the lowest rate of on-time deliveries?",
+        "status": "FAIL",
+        "details": "Flaw: Response is a dictionary but missing the 'answer' key.",
+        "response": {
+            "sql": "SELECT \n    o.shipping_mode,\n    COUNT(*) AS total_deliveries,\n    SUM(CASE WHEN o.delivery_status = 'Shipping on time' THEN 1 ELSE 0 END) AS on_time_deliveries,\n    ROUND(SUM(CASE WHEN o.delivery_status = 'Shipping on time' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS on_time_percentage\nFROM \n    orders o\nGROUP BY \n    o.shipping_mode\nORDER BY \n    on_time_percentage ASC\nLIMIT 1",
+            "rows": [
+                {
+                    "shipping_mode": "First Class",
+                    "total_deliveries": 10079,
+                    "on_time_deliveries": 0,
+                    "on_time_percentage": 0.0
+                }
+            ],
+            "row_count": 1,
+            "execution_time": 0.19841742515563965,
+            "explanation": "Query executed successfully and returned 1 rows.",
+            "type": "sql_query",
+            "validation_confidence": 0.95,
+            "cost_estimate": 25,
+            "warnings": [
+                "Add COALESCE or IFNULL to handle potential NULL values in delivery_status",
+                "Use NULLIF to prevent division by zero",
+                "Consider adding an index on shipping_mode and delivery_status columns for performance",
+                "Use COUNT(CASE WHEN...) instead of SUM(CASE WHEN...) for counting",
+                "Consider using a CTE or subquery to calculate on_time_percentage for better readability"
+            ],
+            "validation_level": "moderate"
+        }
+    },
+    {
+        "question_id": 12,
+        "question": "Who are our top 10 customers by total order value?",
+        "status": "FAIL",
+        "details": "Flaw: Response is a dictionary but missing the 'answer' key.",
+        "response": {
+            "sql": "SELECT \n    c.customer_id,\n    c.first_name,\n    c.last_name,\n    c.email,\n    COALESCE(SUM(oi.total), 0) AS total_order_value\nFROM \n    customers c\nLEFT JOIN \n    orders o ON c.customer_id = o.customer_id\nLEFT JOIN \n    order_items oi ON o.order_id = oi.order_id\nGROUP BY \n    c.customer_id, c.first_name, c.last_name, c.email\nORDER BY \n    total_order_value DESC\nLIMIT 10",
+            "rows": [
+                {
+                    "customer_id": 791,
+                    "first_name": "Mary",
+                    "last_name": "Smith",
+                    "email": "XXXXXXXXX",
+                    "total_order_value": 9436.61008833
+                },
+                {
+                    "customer_id": 8766,
+                    "first_name": "Mary",
+                    "last_name": "Duncan",
+                    "email": "XXXXXXXXX",
+                    "total_order_value": 8400.98010666
+                },
+                {
+                    "customer_id": 9371,
+                    "first_name": "Mary",
+                    "last_name": "Patterson",
+                    "email": "XXXXXXXXX",
+                    "total_order_value": 8222.670103
+                },
+                {
+                    "customer_id": 2641,
+                    "first_name": "Betty",
+                    "last_name": "Spears",
+                    "email": "XXXXXXXXX",
+                    "total_order_value": 8221.64012954
+                },
+                {
+                    "customer_id": 4249,
+                    "first_name": "Mary",
+                    "last_name": "Butler",
+                    "email": "XXXXXXXXX",
+                    "total_order_value": 8198.15006854
+                },
+                {
+                    "customer_id": 1657,
+                    "first_name": "Betty",
+                    "last_name": "Phillips",
+                    "email": "XXXXXXXXX",
+                    "total_order_value": 8165.2300226199995
+                },
+                {
+                    "customer_id": 3710,
+                    "first_name": "Ashley",
+                    "last_name": "Smith",
+                    "email": "XXXXXXXXX",
+                    "total_order_value": 8112.1301271699995
+                },
+                {
+                    "customer_id": 5654,
+                    "first_name": "Jerry",
+                    "last_name": "Smith",
+                    "email": "XXXXXXXXX",
+                    "total_order_value": 7918.75008019
+                },
+                {
+                    "customer_id": 5715,
+                    "first_name": "Kelly",
+                    "last_name": "Smith",
+                    "email": "XXXXXXXXX",
+                    "total_order_value": 7881.10009173
+                },
+                {
+                    "customer_id": 1288,
+                    "first_name": "Evelyn",
+                    "last_name": "Thompson",
+                    "email": "XXXXXXXXX",
+                    "total_order_value": 7869.02006526
+                }
+            ],
+            "row_count": 10,
+            "execution_time": 0.8158915042877197,
+            "explanation": "Query executed successfully and returned 10 rows.",
+            "type": "sql_query",
+            "validation_confidence": 0.9,
+            "cost_estimate": 65,
+            "warnings": [
+                "Add COALESCE or IFNULL to handle potential NULL values in JOIN conditions",
+                "Consider adding an index on customer_id in the orders and customers tables if not already present",
+                "Add an index on order_id in the order_items table if not already present",
+                "Consider adding a date range filter if recent data is more relevant",
+                "Use a CTE or subquery to pre-aggregate order totals before joining with customers for potential performance improvement",
+                "Consider using INNER JOIN instead of LEFT JOIN if all customers are expected to have orders"
+            ],
+            "validation_level": "moderate"
+        }
+    },
+    {
+        "question_id": 13,
+        "question": "What is the average time between order date and shipping date by country?",
+        "status": "FAIL",
+        "details": "Flaw: Response is a dictionary but missing the 'answer' key.",
+        "response": {
+            "sql": "SELECT\n    o.order_country AS country,\n    AVG(JULIANDAY(o.shipping_date) - JULIANDAY(o.order_date)) AS avg_days_to_ship\nFROM\n    orders o\nWHERE\n    o.shipping_date IS NOT NULL\n    AND o.order_date IS NOT NULL\nGROUP BY\n    o.order_country\nORDER BY\n    avg_days_to_ship DESC\nLIMIT 100",
+            "rows": [
+                {
+                    "country": "Zimbabue",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Zambia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Yibuti",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Yemen",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Vietnam",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Venezuela",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Uzbekist\u00e1n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Uruguay",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Uganda",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Ucrania",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "T\u00fanez",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Turqu\u00eda",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Turkmenist\u00e1n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Trinidad y Tobago",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Togo",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Tayikist\u00e1n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Tanzania",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Taiw\u00e1n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Tailandia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "S\u00e1hara Occidental",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Surinam",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Suiza",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Suecia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Sud\u00e1n del Sur",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Sud\u00e1n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "SudAfrica",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Suazilandia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Sri Lanka",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Somalia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Siria",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Singapur",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Sierra Leona",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Serbia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Senegal",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Rusia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Rumania",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Ruanda",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Rep\u00fablica del Congo",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Rep\u00fablica de Gambia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Rep\u00fablica Dominicana",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Rep\u00fablica Democr\u00e1tica del Congo",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Rep\u00fablica Checa",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Rep\u00fablica Centroafricana",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Reino Unido",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Qatar",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Portugal",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Polonia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Per\u00fa",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Pa\u00edses Bajos",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Paraguay",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Pap\u00faa Nueva Guinea",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Panam\u00e1",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Pakist\u00e1n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Om\u00e1n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "N\u00edger",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Nueva Zelanda",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Noruega",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Nigeria",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Nicaragua",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Nepal",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Namibia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "M\u00e9xico",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Myanmar (Birmania)",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Mozambique",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Montenegro",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Mongolia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Moldavia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Mauritania",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Martinica",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Marruecos",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Mali",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Malasia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Madagascar",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Macedonia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "L\u00edbano",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Luxemburgo",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Lituania",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Libia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Liberia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Lesoto",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Laos",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Kuwait",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Kirguist\u00e1n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Kenia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Kazajist\u00e1n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Jordania",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Jap\u00f3n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Jamaica",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Italia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Israel",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Ir\u00e1n",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Irlanda",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Irak",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Indonesia",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "India",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Hungr\u00eda",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Hong Kong",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Honduras",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Hait\u00ed",
+                    "avg_days_to_ship": null
+                },
+                {
+                    "country": "Guyana",
+                    "avg_days_to_ship": null
+                }
+            ],
+            "row_count": 100,
+            "execution_time": 0.2191450595855713,
+            "explanation": "Query executed successfully and returned 100 rows.",
+            "type": "sql_query",
+            "validation_confidence": 0.95,
+            "cost_estimate": 25,
+            "warnings": [
+                "Add COALESCE or IFNULL to handle potential NULL values in order_country",
+                "Consider adding an index on (order_country, order_date, shipping_date) for performance",
+                "Use DATEDIFF function instead of JULIANDAY if available for better readability",
+                "Consider removing LIMIT clause if all countries are needed",
+                "Add error handling for invalid date values"
+            ],
+            "validation_level": "moderate"
+        }
+    },
+    {
+        "question_id": 14,
+        "question": "Which product categories have shown declining sales over the past three quarters?",
+        "status": "FAIL",
+        "details": "Flaw: Application returned an error: Query validation failed",
+        "response": {
+            "error": "Query validation failed",
+            "issues": [
+                "The query only compares specific months instead of full quarters",
+                "The query may miss declining trends if there are fluctuations within quarters",
+                "The LIMIT clause may exclude some declining categories if there are more than 10",
+                "The query assumes that 'now' is the end of a quarter, which may not always be true"
+            ],
+            "warnings": [
+                "Use full quarter date ranges instead of single months",
+                "Consider using a rolling average or sum for each quarter to smooth out monthly fluctuations",
+                "Remove the LIMIT clause or increase it to ensure all declining categories are included",
+                "Add error handling for cases where there isn't enough historical data",
+                "Use explicit date ranges instead of relying on 'now'",
+                "Consider adding indexes on order_date, product_id, and category_name for performance",
+                "Use CTEs or subqueries to calculate quarterly sales separately for better readability"
+            ],
+            "suggested_fix": null,
+            "original_sql": "SELECT \n    p.category_name,\n    SUM(CASE WHEN strftime('%Y-%m', o.order_date) = strftime('%Y-%m', 'now', '-7 months') THEN oi.sales ELSE 0 END) AS sales_q1,\n    SUM(CASE WHEN strftime('%Y-%m', o.order_date) = strftime('%Y-%m', 'now', '-4 months') THEN oi.sales ELSE 0 END) AS sales_q2,\n    SUM(CASE WHEN strftime('%Y-%m', o.order_date) = strftime('%Y-%m', 'now', '-1 months') THEN oi.sales ELSE 0 END) AS sales_q3\nFROM \n    products p\nJOIN \n    order_items oi ON p.product_id = oi.product_id\nJOIN \n    orders o ON oi.order_id = o.order_id\nWHERE \n    o.order_date >= date('now', '-9 months')\nGROUP BY \n    p.category_name\nHAVING \n    sales_q3 < sales_q2 AND sales_q2 < sales_q1\nORDER BY \n    (sales_q1 - sales_q3) DESC\nLIMIT 10",
+            "type": "sql_query",
+            "validation_level": "moderate"
+        }
+    },
+    {
+        "question_id": 15,
+        "question": "What is the distribution of orders by customer segment and region?",
+        "status": "FAIL",
+        "details": "Flaw: Response is a dictionary but missing the 'answer' key.",
+        "response": {
+            "sql": "SELECT \n    c.segment AS customer_segment,\n    o.order_region AS region,\n    COUNT(DISTINCT o.order_id) AS order_count,\n    ROUND(COUNT(DISTINCT o.order_id) * 100.0 / SUM(COUNT(DISTINCT o.order_id)) OVER (), 2) AS percentage\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nGROUP BY \n    c.segment, o.order_region\nORDER BY \n    c.segment, order_count DESC\nLIMIT 100",
+            "rows": [
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Western Europe",
+                    "order_count": 5204,
+                    "percentage": 7.91
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Central America",
+                    "order_count": 4931,
+                    "percentage": 7.5
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "South America",
+                    "order_count": 2543,
+                    "percentage": 3.87
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Oceania",
+                    "order_count": 2259,
+                    "percentage": 3.44
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Southeast Asia",
+                    "order_count": 2216,
+                    "percentage": 3.37
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Northern Europe",
+                    "order_count": 1914,
+                    "percentage": 2.91
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Southern Europe",
+                    "order_count": 1842,
+                    "percentage": 2.8
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Eastern Asia",
+                    "order_count": 1729,
+                    "percentage": 2.63
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "South Asia",
+                    "order_count": 1706,
+                    "percentage": 2.59
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Caribbean",
+                    "order_count": 1410,
+                    "percentage": 2.14
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "West of USA ",
+                    "order_count": 1404,
+                    "percentage": 2.14
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "East of USA",
+                    "order_count": 1201,
+                    "percentage": 1.83
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "West Asia",
+                    "order_count": 1059,
+                    "percentage": 1.61
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "US Center ",
+                    "order_count": 1049,
+                    "percentage": 1.6
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "South of  USA ",
+                    "order_count": 705,
+                    "percentage": 1.07
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Eastern Europe",
+                    "order_count": 679,
+                    "percentage": 1.03
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "West Africa",
+                    "order_count": 624,
+                    "percentage": 0.95
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "North Africa",
+                    "order_count": 568,
+                    "percentage": 0.86
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "East Africa",
+                    "order_count": 335,
+                    "percentage": 0.51
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Central Africa",
+                    "order_count": 276,
+                    "percentage": 0.42
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Southern Africa",
+                    "order_count": 206,
+                    "percentage": 0.31
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Canada",
+                    "order_count": 150,
+                    "percentage": 0.23
+                },
+                {
+                    "customer_segment": "Consumer",
+                    "region": "Central Asia",
+                    "order_count": 109,
+                    "percentage": 0.17
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Western Europe",
+                    "order_count": 3072,
+                    "percentage": 4.67
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Central America",
+                    "order_count": 2797,
+                    "percentage": 4.25
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "South America",
+                    "order_count": 1503,
+                    "percentage": 2.29
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Oceania",
+                    "order_count": 1322,
+                    "percentage": 2.01
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Southeast Asia",
+                    "order_count": 1294,
+                    "percentage": 1.97
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Northern Europe",
+                    "order_count": 1113,
+                    "percentage": 1.69
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Southern Europe",
+                    "order_count": 1047,
+                    "percentage": 1.59
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Eastern Asia",
+                    "order_count": 1030,
+                    "percentage": 1.57
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "South Asia",
+                    "order_count": 1025,
+                    "percentage": 1.56
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Caribbean",
+                    "order_count": 884,
+                    "percentage": 1.34
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "West of USA ",
+                    "order_count": 797,
+                    "percentage": 1.21
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "East of USA",
+                    "order_count": 701,
+                    "percentage": 1.07
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "West Asia",
+                    "order_count": 592,
+                    "percentage": 0.9
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "US Center ",
+                    "order_count": 562,
+                    "percentage": 0.85
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "South of  USA ",
+                    "order_count": 416,
+                    "percentage": 0.63
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Eastern Europe",
+                    "order_count": 385,
+                    "percentage": 0.59
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "West Africa",
+                    "order_count": 375,
+                    "percentage": 0.57
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "North Africa",
+                    "order_count": 328,
+                    "percentage": 0.5
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Central Africa",
+                    "order_count": 183,
+                    "percentage": 0.28
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "East Africa",
+                    "order_count": 167,
+                    "percentage": 0.25
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Southern Africa",
+                    "order_count": 114,
+                    "percentage": 0.17
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Canada",
+                    "order_count": 94,
+                    "percentage": 0.14
+                },
+                {
+                    "customer_segment": "Corporate",
+                    "region": "Central Asia",
+                    "order_count": 55,
+                    "percentage": 0.08
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Western Europe",
+                    "order_count": 1734,
+                    "percentage": 2.64
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Central America",
+                    "order_count": 1668,
+                    "percentage": 2.54
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "South America",
+                    "order_count": 933,
+                    "percentage": 1.42
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Southeast Asia",
+                    "order_count": 846,
+                    "percentage": 1.29
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Oceania",
+                    "order_count": 781,
+                    "percentage": 1.19
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Northern Europe",
+                    "order_count": 689,
+                    "percentage": 1.05
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Southern Europe",
+                    "order_count": 654,
+                    "percentage": 0.99
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "South Asia",
+                    "order_count": 604,
+                    "percentage": 0.92
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Eastern Asia",
+                    "order_count": 559,
+                    "percentage": 0.85
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Caribbean",
+                    "order_count": 512,
+                    "percentage": 0.78
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "West of USA ",
+                    "order_count": 466,
+                    "percentage": 0.71
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "East of USA",
+                    "order_count": 421,
+                    "percentage": 0.64
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "West Asia",
+                    "order_count": 371,
+                    "percentage": 0.56
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "US Center ",
+                    "order_count": 324,
+                    "percentage": 0.49
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Eastern Europe",
+                    "order_count": 228,
+                    "percentage": 0.35
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "South of  USA ",
+                    "order_count": 224,
+                    "percentage": 0.34
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "West Africa",
+                    "order_count": 224,
+                    "percentage": 0.34
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "North Africa",
+                    "order_count": 168,
+                    "percentage": 0.26
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "East Africa",
+                    "order_count": 111,
+                    "percentage": 0.17
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Central Africa",
+                    "order_count": 97,
+                    "percentage": 0.15
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Southern Africa",
+                    "order_count": 78,
+                    "percentage": 0.12
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Canada",
+                    "order_count": 65,
+                    "percentage": 0.1
+                },
+                {
+                    "customer_segment": "Home Office",
+                    "region": "Central Asia",
+                    "order_count": 20,
+                    "percentage": 0.03
+                }
+            ],
+            "row_count": 69,
+            "execution_time": 0.30804944038391113,
+            "explanation": "Query executed successfully and returned 69 rows.",
+            "type": "sql_query",
+            "validation_confidence": 0.9,
+            "cost_estimate": 45,
+            "warnings": [
+                "Consider removing the LIMIT clause to ensure all data is included",
+                "Add appropriate indexes on c.segment, o.order_region, and o.customer_id to improve join and grouping performance",
+                "Use table aliases consistently for better readability (e.g., 'c.' for customers and 'o.' for orders)",
+                "Consider adding error handling or NULL checks for potentially missing data",
+                "If the result set is large, consider implementing pagination instead of using LIMIT"
+            ],
+            "validation_level": "moderate"
+        }
+    },
+    {
+        "question_id": 16,
+        "question": "Which inventory items qualify as \"no-movers\" according to our policy, and what is their total current value?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "Based on the available information and analysis results, I'm afraid I cannot provide a definitive answer to the question about \"no-mover\" inventory items and their total current value. Here's a comprehensive overview of the situation:\n\n1. Data Limitations:\n   The current database schema does not contain the necessary information to identify \"no-mover\" inventory items or calculate their values. We're missing crucial data such as inventory levels, movement history, and current item values.\n\n2. Policy Gap:\n   There appears to be no specific policy document addressing the classification of \"no-mover\" items in our current policy repository. This suggests a potential gap in our inventory management policies.\n\n3. Actionable Insights:\n   a. Data Infrastructure: To address this question in the future, we need to enhance our data infrastructure. Consider implementing an inventory management system that tracks item movement, last sale date, and current values.\n   b. Policy Development: Develop a clear policy that defines \"no-mover\" items, including criteria such as duration without movement and any exceptions.\n\n4. Compliance Considerations:\n   Without a defined policy and proper data tracking, we may be at risk of non-compliance with inventory management best practices or industry standards. This could potentially impact financial reporting accuracy and operational efficiency.\n\n5. Next Steps:\n   a. Conduct a thorough review of our inventory management processes and systems.\n   b. Engage with relevant departments (e.g., Operations, Finance) to define \"no-mover\" criteria and develop a comprehensive inventory management policy.\n   c. Implement necessary changes to our database schema and inventory tracking systems to capture required data.\n   d. Once the above steps are completed, develop and validate SQL queries to accurately identify no-mover items and calculate their values.\n\nIn conclusion, while we cannot provide the requested information at this time, this situation highlights important areas for improvement in our data management and policy framework. Addressing these gaps will not only allow us to answer such questions in the future but also enhance our overall inventory management capabilities.",
+            "sql_result": {
+                "error": "Query validation failed",
+                "issues": [
+                    "Query must start with SELECT"
+                ],
+                "warnings": [],
+                "suggested_fix": null,
+                "original_sql": "Unfortunately, I cannot provide a precise SQL query to answer the question \"Which inventory items qualify as 'no-movers' according to our policy, and what is their total current value?\" based on the given database schema. The provided tables do not contain information about inventory items, their movement status, or current value. There is no table or column that directly relates to inventory movement or \"no-movers\" classification. To answer this question, we would need additional tables or columns that track inventory levels, movement history, and current values of items. Without this information in the schema, it's not possible to construct an accurate SQL query to identify no-movers or calculate their total value.",
+                "type": "sql_query",
+                "validation_level": "moderate"
+            },
+            "policy_context": {
+                "answer": "No relevant policy documents found for your question.",
+                "sources": [],
+                "type": "policy_query",
+                "confidence": 0.0
+            },
+            "type": "hybrid_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 17,
+        "question": "Are there any suppliers who don't meet our minimum ethical sourcing requirements as defined in our Supplier Code of Conduct, and what percentage of our total spend do they represent?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "Based on the available information and analysis results, I'm afraid I cannot provide a definitive answer to your question about suppliers meeting our minimum ethical sourcing requirements and their percentage of total spend. Here's a comprehensive overview of the situation and some actionable insights:\n\n1. Data Limitations:\nOur current database schema does not contain the necessary tables or columns to directly assess supplier compliance with our Supplier Code of Conduct or to calculate spend percentages. We're missing crucial data points such as:\n- A suppliers table with compliance status\n- Supplier spend data\n- Detailed information about our Supplier Code of Conduct requirements\n\n2. Compliance Considerations:\nWithout this data, we cannot accurately determine which suppliers, if any, are not meeting our ethical sourcing requirements. This gap in our data infrastructure poses a significant compliance risk, as we're unable to effectively monitor and manage our supply chain's adherence to our ethical standards.\n\n3. Actionable Insights:\nTo address this issue and improve our ability to monitor supplier compliance, I recommend the following actions:\n\na) Data Infrastructure Enhancement:\n- Implement a suppliers database that includes compliance status for each supplier.\n- Create a system to track supplier spend data.\n- Develop a detailed digital version of our Supplier Code of Conduct that can be linked to supplier profiles.\n\nb) Compliance Monitoring:\n- Establish a regular audit process to assess supplier compliance with our ethical sourcing requirements.\n- Implement a scoring system for supplier ethical performance.\n\nc) Reporting Capabilities:\n- Develop reporting tools that can easily generate compliance reports and spend analysis based on ethical sourcing criteria.\n\nd) Policy Review:\n- Conduct a thorough review of our Supplier Code of Conduct to ensure it's comprehensive and up-to-date.\n- Ensure that all relevant policies are properly documented and accessible in our policy management system.\n\n4. Next Steps:\nI recommend initiating a cross-functional project involving Procurement, IT, Legal, and Compliance teams to address these data and process gaps. This will enable us to effectively monitor supplier compliance, manage risks, and make informed decisions about our supply chain.\n\nBy implementing these measures, we'll be better positioned to answer questions about supplier compliance and spend in the future, ensuring we maintain high ethical standards throughout our supply chain.",
+            "sql_result": {
+                "error": "Query validation failed",
+                "issues": [
+                    "Query must start with SELECT"
+                ],
+                "warnings": [],
+                "suggested_fix": null,
+                "original_sql": "Unfortunately, I cannot provide a precise SQL query to answer this question based on the given database schema. The schema does not contain any tables or columns that directly relate to supplier ethical sourcing requirements, Supplier Code of Conduct compliance, or supplier spend data. The closest relevant information appears to be in the policy_documents table, but it does not contain supplier-specific data.\n\nTo properly answer this question, we would need additional tables and data such as:\n\n1. A suppliers table with compliance status\n2. A table linking suppliers to their spend amounts\n3. More detailed information about the Supplier Code of Conduct requirements\n\nWithout this information, it's not possible to write an accurate SQL query to address the question about suppliers meeting ethical sourcing requirements and their percentage of total spend.",
+                "type": "sql_query",
+                "validation_level": "moderate"
+            },
+            "policy_context": {
+                "answer": "No relevant policy documents found for your question.",
+                "sources": [],
+                "type": "policy_query",
+                "confidence": 0.0
+            },
+            "type": "hybrid_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 18,
+        "question": "Based on our Product Quality Assurance standards, which products had the highest number of quality-related returns in the past year?",
+        "status": "FAIL",
+        "details": "Flaw: Expected a list of items in 'answer', got: <class 'str'>",
+        "response": {
+            "answer": "Based on the information provided, I'm afraid I cannot give you a definitive answer regarding which products had the highest number of quality-related returns in the past year. There are a few important points to consider:\n\n1. Data Limitations: Our current database schema does not contain the necessary information to track product returns or quality issues. We lack specific tables or columns that capture data on returns, reasons for returns, or quality-related metrics.\n\n2. Gap in Quality Assurance Tracking: This data gap suggests that our current systems may not be adequately set up to monitor and analyze product quality issues and returns. This is a significant area for improvement in our quality assurance processes.\n\n3. Need for Enhanced Data Collection: To effectively answer this question and improve our quality assurance standards, we should consider implementing a system to track:\n   - Product returns\n   - Reasons for returns (especially quality-related issues)\n   - Date of returns to allow for time-based analysis\n\n4. Compliance Considerations: While no specific policy documents were found relating to this question, it's crucial to ensure that any new data collection methods comply with relevant data protection and privacy regulations.\n\n5. Actionable Next Steps:\n   a. Conduct a review of our current quality assurance processes and data collection methods.\n   b. Develop and implement a system for tracking product returns and their reasons.\n   c. Ensure that the new system allows for easy querying and analysis of quality-related returns.\n   d. Once implemented, regularly review this data to identify products with high return rates and address quality issues proactively.\n\n6. Broader Quality Management: While we can't currently identify specific products with high return rates, this situation highlights the need for a more robust quality management system. Consider implementing a comprehensive quality management framework that includes not just returns tracking, but also other quality metrics and continuous improvement processes.\n\nBy addressing these data and process gaps, we'll be better positioned to answer questions about product quality and returns in the future, ultimately leading to improved product quality and customer satisfaction.",
+            "sql_result": {
+                "error": "Query validation failed",
+                "issues": [
+                    "Query must start with SELECT"
+                ],
+                "warnings": [],
+                "suggested_fix": null,
+                "original_sql": "Unfortunately, I cannot provide a SQL query to answer the question \"Which products had the highest number of quality-related returns in the past year?\" based on the given database schema. The provided tables do not contain information about product returns or quality issues. The schema lacks tables or columns that track product returns, quality issues, or related metrics. To answer this question, we would need additional data tables that specifically capture information about product returns and their reasons.",
+                "type": "sql_query",
+                "validation_level": "moderate"
+            },
+            "policy_context": {
+                "answer": "No relevant policy documents found for your question.",
+                "sources": [],
+                "type": "policy_query",
+                "confidence": 0.0
+            },
+            "type": "hybrid_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 19,
+        "question": "According to our Transportation and Logistics policy, are we using the optimal shipping modes for high-value orders to international destinations?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "No relevant policy documents found for your question.",
+            "sources": [],
+            "type": "policy_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 20,
+        "question": "Which products that are classified as \"hazardous materials\" according to our HSE policy are currently being stored in facilities not certified for such materials?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "Based on the analysis results and available information, I'm afraid I cannot provide a definitive answer to the question about hazardous materials storage in non-certified facilities. There are several important limitations and considerations to address:\n\n1. Data Limitations:\nThe current database schema lacks critical information needed to accurately assess this situation. Specifically, we're missing:\n- Product hazard classifications\n- Facility certifications for hazardous material storage\n- Current inventory locations\n\n2. Policy Context:\nNo relevant policy documents were found in our system related to hazardous materials storage or HSE policies. This gap in documented policies is a concern that should be addressed.\n\n3. Compliance Considerations:\nWithout proper data and clear policies, we cannot effectively evaluate our compliance with hazardous materials storage regulations. This presents a significant risk to the organization.\n\nActionable Insights and Recommendations:\n\n1. Data Infrastructure:\nUrgently update the database to include:\n- A hazard classification system for products\n- Information on storage facility certifications\n- Real-time inventory tracking with location data\n\n2. Policy Development:\nDevelop and document clear HSE policies, particularly regarding hazardous materials classification and storage requirements. Ensure these policies are accessible and understood by all relevant staff.\n\n3. Compliance Audit:\nConduct a thorough audit of current storage practices for potentially hazardous materials. This should be done manually until the data infrastructure is improved.\n\n4. Training:\nImplement training programs for staff handling potentially hazardous materials to ensure awareness of proper storage and handling procedures.\n\n5. Regular Reviews:\nEstablish a process for regular reviews of hazardous material storage practices and update both the database and policies as needed.\n\nIn conclusion, while we cannot currently answer the specific question posed, this inquiry has highlighted critical gaps in our data management and policy framework. Addressing these gaps should be a high priority to ensure safety, compliance, and effective risk management in our operations.",
+            "sql_result": {
+                "error": "Query validation failed",
+                "issues": [
+                    "Query must start with SELECT"
+                ],
+                "warnings": [],
+                "suggested_fix": null,
+                "original_sql": "Unfortunately, I cannot generate a SQL query to answer the specific question about hazardous materials storage because the provided database schema does not contain the necessary tables or columns to determine:\n\n1. Which products are classified as \"hazardous materials\"\n2. Which facilities are certified for storing hazardous materials\n3. Where products are currently being stored\n\nThe schema lacks information about product hazard classifications, facility certifications, and current inventory locations. Without this data, it's not possible to write a query that accurately answers the given question.\n\nTo answer this question, the database would need to be expanded to include:\n\n1. A hazard classification for products\n2. Information about storage facilities and their certifications\n3. Current inventory data showing which products are stored in which facilities\n\nOnce that data is available, an appropriate query could be constructed.",
+                "type": "sql_query",
+                "validation_level": "moderate"
+            },
+            "policy_context": {
+                "answer": "No relevant policy documents found for your question.",
+                "sources": [],
+                "type": "policy_query",
+                "confidence": 0.0
+            },
+            "type": "hybrid_query",
+            "confidence": 0.0
+        }
+    },
+    {
+        "question_id": 21,
+        "question": "Based on our Risk Management framework, which supply chain disruptions occurred in the past year that exceeded our defined risk tolerance thresholds, and what was their financial impact?",
+        "status": "PASS",
+        "details": "Success: Response passed basic checks (further validation may be needed).",
+        "response": {
+            "answer": "Based on the available information and data analysis results, I regret that I cannot provide a comprehensive answer to your specific question about supply chain disruptions exceeding risk tolerance thresholds and their financial impact. However, I can offer some insights and recommendations:\n\n1. Data Limitations: Our current database structure lacks the necessary tables and columns to track supply chain disruptions, risk tolerance thresholds, and their financial impacts. The only potentially relevant data point is the \"late_delivery_risk\" column in the \"orders\" table, which is insufficient for a thorough risk management analysis.\n\n2. Risk Management Framework Gap: The absence of relevant data suggests a potential gap in our risk management framework implementation or data collection processes. This presents an opportunity for improvement in our risk management practices.\n\n3. Actionable Insights:\n   a. Implement a robust data collection system: Develop a system to track supply chain disruptions, their causes, durations, and financial impacts.\n   b. Define clear risk tolerance thresholds: Establish and document specific thresholds for various types of supply chain risks.\n   c. Enhance database structure: Create new tables or modify existing ones to capture risk-related data points.\n   d. Regular reporting: Set up periodic reviews of supply chain disruptions against defined thresholds.\n\n4. Compliance Considerations: While no specific compliance issues were identified due to lack of data, it's crucial to ensure that any enhanced risk management practices align with relevant industry standards and regulations.\n\n5. Next Steps:\n   a. Conduct a comprehensive review of the current risk management framework.\n   b. Engage with IT and data management teams to address the data structure limitations.\n   c. Develop a project plan to implement the necessary changes in data collection and analysis processes.\n   d. Consider engaging external risk management consultants to assist in framework enhancement.\n\nBy addressing these points, you can work towards building a more robust risk management system that will allow for better tracking and analysis of supply chain disruptions in the future. This proactive approach will enable more informed decision-making and potentially mitigate financial impacts of future disruptions.",
+            "sql_result": {
+                "error": "Query validation failed",
+                "issues": [
+                    "Query must start with SELECT"
+                ],
+                "warnings": [],
+                "suggested_fix": null,
+                "original_sql": "Unfortunately, I cannot provide a precise SQL query to answer this specific question based on the given schema. The database structure provided does not contain tables or columns that directly relate to risk management, supply chain disruptions, risk tolerance thresholds, or financial impact of disruptions. \n\nThe closest relevant data we have is the \"late_delivery_risk\" column in the \"orders\" table, but this alone is not sufficient to comprehensively answer the question about risk tolerance thresholds and financial impact of supply chain disruptions.\n\nTo properly answer this question, we would need additional tables or columns that track:\n\n1. Supply chain disruption events\n2. Risk tolerance thresholds\n3. Financial impact of disruptions\n4. Timestamps or date ranges for when disruptions occurred\n\nWithout this information in the database schema, it's not possible to construct a meaningful SQL query to address the specific question about risk management and supply chain disruptions.",
+                "type": "sql_query",
+                "validation_level": "moderate"
+            },
+            "policy_context": {
+                "answer": "No relevant policy documents found for your question.",
+                "sources": [],
+                "type": "policy_query",
+                "confidence": 0.0
+            },
+            "type": "hybrid_query",
+            "confidence": 0.0
+        }
+    }
+]
