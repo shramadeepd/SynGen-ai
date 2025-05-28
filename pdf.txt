@@ -1,0 +1,498 @@
+
+2
+Agno Handbook: Building a Universal AI Platform
+1. Agents and Multi-Step Reasoning
+Agno’s agent framework allows LLMs to take actions and make decisions by calling tools and running
+code in a loop. An agent in Agno is a program where the model’s output controls the workflow (for example,
+choosing to search the web, call a calculator, or query a database). As Hugging Face explains, “LLMs should
+have agency. Agentic programs are the gateway to the outside world for LLMs” . In practice, you define
+an agent by listing available  tools (functions) and a  language model. The agent iteratively reads model
+output, decides which tool to use, executes it, and feeds the result back into the model until a final answer
+emerges. This allows multi-step reasoning: the agent can break a user’s request into steps, query external
+data, perform computations, and integrate results. 
+Tools: Custom functions (e.g. web search, calculator, API calls) with a name, description, and JSON
+schema. The agent chooses among these. 
+Prompting: A structured prompt tells the LLM how to pick tools and how to structure tool calls and
+final answers. 
+Loop: The agent repeats: LLM generates “Thought ➜ Action ➜ Input,” the tool runs, result is passed
+back as context, until it outputs a  Final Answer . 
+from agno import Agent, Tool, OpenAIModel
+# Define a simple tool (square numbers)
+def square(n): return n * n
+square_tool = Tool(name="square", description="Square a number", func=square)
+# Initialize an agent with a language model and tools
+agent = Agent(model=OpenAIModel("gpt-4-0613"), tools=[square_tool])
+result = agent.run("Compute the square of 12 and add 5.")
+print(result) # Agent may call square(12) internally, then add 5
+This example shows an agent thinking step-by-step: it identifies the math task, invokes the  square  tool,
+and continues the reasoning. Agno’s syntax for agents is similar to LangChain’s: you define a model and a
+list of tools, then call  agent.run(...) . Unlike simpler assistants, Agno agents can handle loops and
+multiple actions. Compared to  SmolAgent  (a minimal HF library for code agents), Agno agents can
+integrate with diverse tools and complex pipelines. Agno also supports agents composed in graphs (similar to
+LangGraph if present) or sequential chains. 
+Error Handling & Scaling: In agents, implement retry logic for unreliable tools (e.g. network calls). Cache
+tool outputs when possible to avoid duplicate work. For scaling, run multiple agent instances in parallel
+(threads or async) for high throughput. Ensure tools raise clear exceptions so Agno can log and either retry
+or gracefully fail. 
+1
+• 
+• 
+• 
+1
+2. Retrieval-Augmented Generation (RAG) Pipelines
+Retrieval-Augmented Generation (RAG) in Agno lets you augment LLM outputs with external knowledge.
+The basic pipeline is: ingest data ➔ create embeddings/index ➔ query retriever ➔ feed retrieved docs
+to LLM ➔ generate answer. As defined in Hugging Face Transformers docs, “RAG models retrieve
+documents, pass them to a seq2seq model, then marginalize to generate outputs” . In Agno you
+typically use a Retriever component connected to a Vector Store (like Pinecone or FAISS) and a Language
+Model to answer questions. 
+Steps for a RAG pipeline:
+1. Load Documents: Use file loaders (PDF, DOCX, TXT) or database queries to collect text.
+2.  Split and Embed:  Split text into chunks (e.g., 500 tokens each), compute vector embeddings (with
+OpenAI, Hugging Face, etc.).
+3. Index: Store embeddings in a vector database (Pinecone, Weaviate, or in-memory FAISS).
+4. Query: For a user question, compute its embedding and retrieve top-k relevant chunks via similarity
+search.
+5. Generate Answer: Pass the retrieved documents plus the question into the LLM (often via a prompt
+template) to produce a final answer. 
+from agno import Retriever, VectorStore, OpenAIModel
+# Assume we have a list of docs
+docs = ["Large language models store knowledge...", "Another document..."]
+# Create or connect to a vector store (FAISS in this example)
+vs = VectorStore(backend="faiss")
+# Index documents
+for doc in docs:
+vs.add(doc_text=doc, namespace="knowledge")
+# Define retriever and model
+retriever = Retriever(vector_store=vs, embeddings_model="openai")
+model = OpenAIModel("gpt-4")
+# Query
+question = "What is Retrieval-Augmented Generation?"
+results = retriever.retrieve(question, k=3)
+answer = model.generate(question, context=results)
+print(answer)
+This code indexes two docs and then answers a question using the stored knowledge. It mirrors
+LangChain’s RAG usage. Agno’s Retriever abstraction handles querying the vector index; LangChain uses a
+similar retriever class. When integrating with  Pinecone  or  Weaviate, Agno’s VectorStore backend can
+switch to the cloud API. You can compare: LangChain’s  RetrievalQA  chain vs Agno’s  Retriever + LLM
+pattern. Both reduce hallucinations by grounding answers in real data . 
+Implementation Tips: Use document chunking to control context length. Cache embeddings to avoid re-
+computing. When scaling, shard your vector index or use batch queries. Handle empty retrievals by
+2
+3
+2
+checking if results are found; if not, have a fallback (e.g. a default answer or narrower query). Also, keep
+track of provenance (source document IDs) to explain answers. 
+3. Document Question Answering (QA) Systems
+Document QA is a special case of RAG focused on specific files or corpora. In Agno, you can build a QA
+system by combining document loaders, a Retriever, and an LLM QA chain. First, load documents (PDFs,
+Word docs, text) using a loader; then index them via embeddings; finally ask questions. 
+For example, Agno might offer built-in loaders:
+from agno import DocumentLoader, QASystem, VectorStore
+loader = DocumentLoader(file_path="report.pdf")
+docs = loader.load() # returns text chunks from PDF
+vs = VectorStore(backend="faiss")
+for d in docs: vs.add(doc_text=d, namespace="reports")
+qa = QASystem(vector_store=vs, embeddings="openai", llm_model="gpt-4")
+print(qa.ask("What did the CEO say about future plans?"))
+This snippet shows a high-level  QASystem  that wraps retrieval and LLM answering. The flow is similar to
+LangChain’s  load_data  +  create_documents  +  vectorstore  +  RetrievalQA . The advantage of
+Agno’s abstraction is that it handles splitting, embedding, and querying for you. For large documents, make
+sure to chunk by paragraphs or sections. If the document has images or scans, use OCR (e.g., PyMuPDF)
+before loading. 
+Agno’s QA can also run in a conversational style: maintain chat context, append follow-up questions, and re-
+retrieve as needed. Compare with Hugging Face’s RAG pipelines (using  rag-token  or  rag-sequence
+models) – Agno integrates any LLM, including OpenAI or open models, for the final answer. 
+Performance & Scale: Indexing very large corpora can be slow: consider incremental updates or using
+Pinecone/Weaviate for large data. Cache query results if users often ask similar questions. Monitor latency:
+each QA involves an embedding call and an LLM call. Use asynchronous execution if handling many parallel
+queries.
+4. Code Generation and AI-assisted Programming
+Agno supports code generation by connecting to powerful language models (like OpenAI’s Codex/GPT-4) or
+code-centric models from Hugging Face (e.g., CodeLLaMA, StarCoder). You can use Agno’s pipeline to
+automate code writing, refactoring, or review. For instance, define a prompt asking the model to
+generate a function given a docstring. 
+from agno import LLMChain, HuggingFaceModel
+prompt = "Write a Python function to compute Fibonacci numbers."
+hf_model = HuggingFaceModel("gpt-neo-2.7B")
+3
+
+
+1
+Agno: A Comprehensive Handbook for Building AI
+Systems
+Introduction to Agno
+Agno  is a lightweight, high-performance framework for building AI-powered  Agents  with support for
+memory, knowledge bases, tool usage, and advanced reasoning . In essence, Agno serves a similar
+purpose as LangChain – helping developers construct complex AI systems – but with its own universal
+agent framework and some unique capabilities. Agno simplifies the creation of autonomous AI agents and
+provides out-of-the-box features for multimodal inputs/outputs, multi-agent collaboration, and robust
+retrieval-augmented generation (RAG) . It emphasizes progressive “levels” of agent sophistication,
+from a single agent using tools up to coordinated teams of agents in deterministic workflows .
+Some key strengths of Agno include:
+Model-Agnostic & Fast: Agno integrates with 23+ language model providers (OpenAI, Anthropic,
+local models, etc.) with no vendor lock-in . Agents initialize extremely quickly (on the order of
+microseconds) and with minimal memory overhead .
+Tools and Reasoning as First-Class: Agents can be equipped with tools (functions to act in the
+world) and built-in reasoning capabilities (chain-of-thought) to tackle multi-step problems .
+Multi-Modal Support: Agno agents natively accept text, images, audio, video as inputs and can
+generate outputs in those modalities as well . This enables rich applications beyond text-only.
+Advanced Multi-Agent Architecture: Agno makes it easy to create teams of agents that either
+route tasks to the best expert, collaborate on the same task, or coordinate on sub-tasks . This
+multi-agent system design is not directly provided by LangChain.
+Built-in RAG (Retrieval-Augmented Generation): Agents can seamlessly search knowledge bases
+(vector databases) on the fly to retrieve domain-specific information . Agno’s “Agentic Search”
+supports hybrid vector+keyword search with re-ranking for high relevancy.
+Memory and Persistence: Agno supports both short-term conversation memory and long-term
+memory storage. Agents can remember conversation history (via Session Storage) and even user-
+specific facts/preferences over time .
+Structured Outputs and APIs: Agents can directly return structured data (e.g. Pydantic models or
+JSON) as outputs , which simplifies post-processing. Agno also provides pre-built FastAPI routes
+to deploy agents and workflows as services, plus a monitoring UI for real-time observability .
+In this handbook, we will mirror the major features of LangChain and show how each is achieved with
+Agno’s APIs and primitives. For each concept – agents, tools, memory, chains/workflows, retrieval (RAG),
+routing, toolkits, etc. – you’ll find an explanation of Agno’s approach, a mapping to the equivalent
+LangChain concept, and example use cases with code. By the end, you’ll see how Agno can do everything
+LangChain does (and more) in a simple, unified way.
+1
+2 3
+4
+• 
+5
+6
+• 
+7
+• 
+8
+• 
+3
+• 
+9
+• 
+10
+• 
+11
+12
+1
+LangChain vs Agno: Feature Mapping
+If you’re coming from LangChain, it helps to understand how its terminology and features translate to
+Agno. The table below summarizes keyword mappings between LangChain and Agno, along with plain-
+English explanations of each feature:
+LangChain Concept Agno Equivalent Explanation
+LLM / Model Model (via 
+agno.models )
+The language model (e.g. GPT-4, Claude, Llama2)
+that generates text. Agno is model-agnostic,
+supporting 23+ providers with unified APIs .
+Prompt Template /
+System Prompt
+Agent
+Description &
+Instructions
+The prompt given to the model. In Agno, each
+Agent has a  description  (system role or
+persona) and  instructions  (guidelines) to
+guide the model’s behavior .
+Chain (LLMChain, etc.) Workflow
+A sequence of steps or calls that process input
+through multiple stages. Agno Workflows are
+deterministic Python functions orchestrating
+agents and logic , analogous to chains but
+with more flexibility.
+Agent (LLM Agent) Agent
+An autonomous AI entity that uses an LLM (and
+optionally tools) to handle tasks. Both LangChain
+and Agno have Agents, but Agno’s Agent is a single
+unified class where you configure the model, tools,
+memory, etc. .
+Tool (function an agent
+can use) Tool / Toolkit
+In both frameworks, tools are functions enabling
+agents to act (e.g. search, API calls). Agno includes
+a tool decorator to easily create tools  and
+comes with 80+ built-in toolkits (pre-made sets of
+tools)  for common domains.
+Memory
+(ConversationMemory)
+Memory &
+Storage
+Mechanisms to preserve conversation state. Agno
+distinguishes short-term session storage (chat
+history in a database) and long-term Memory for
+user preferences and facts . This covers what
+LangChain calls conversational memory and
+extended memory.
+Vector Store / Retriever Knowledge Base
+(Vector DB)
+A database of embeddings for retrieval. Agno uses 
+Knowledge Bases backed by vector DBs to enable
+RAG . The agent can query these at runtime
+using built-in search tools, similar to LangChain’s
+RetrievalQAChain.
+5
+13
+14 15
+16
+17
+18
+19
+20
+2
+
+
+
+
+1
+AI Agent Backend Implementation Guide
+System Overview
+The system consists of a FastAPI server hosting an Agno-based agent, connected to both structured and
+unstructured data sources. Incoming user queries hit FastAPI endpoints, which pass them to an Agno Agent
+configured with a Gemini (Google) LLM model and various tools. For structured lookups, the agent uses a
+SQLTools  connection to PostgreSQL (with  pgvector ) . For unstructured knowledge, the agent uses
+a Chroma vector store to index documents. Redis is used for background tasks, caching, and long-term
+memory. Access control is enforced via JWTs containing user roles and region claims . This architecture
+aligns with Agno’s reference FastAPI/Postgres setup (FastAPI handling requests; Postgres for sessions,
+knowledge, and memories) . 
+Features
+Agentic AI Core: Uses Agno’s high-performance agent framework (model-agnostic, reasoning-first).
+Agno claims agents “instantiate in ~3μs and use ~5Kib memory” . Agents can embed domain
+knowledge and run reasoning chains. 
+Natural Language Interface: Supports conversational NL queries via a Gemini LLM. Agents can
+leverage pre-built FastAPI routes and can produce fully-typed structured outputs (JSON, SQL,
+etc.) . 
+Retrieval-Augmented Generation (RAG): Integrated support for retrieval. Agno’s vector search is
+“state-of-the-art” with hybrid search and re-ranking . The agent can fetch relevant docs from
+Chroma (vector DB) or even perform keyword/semantic search in Postgres (via pgvector). 
+Memory and State: Built-in session and long-term memory drivers . Short-term dialogue context
+is stored (in-memory or Redis), while Redis or Postgres can hold long-term agent memory. Tools like
+Agno’s  PostgresAgentStorage  allow persisting history . 
+FastAPI Integration: Agno provides ready-made FastAPI routes for agents and workflows ,
+allowing seamless API exposure. 
+Lightning-Fast: Optimized for speed – agents and tools run asynchronously with minimal overhead. 
+Role/Geo Access: JWT-based RBAC and geo-fencing can be enforced at the endpoint level. For
+example, a FastAPI dependency can decode a JWT and check  payload["role"]  and 
+payload["region"]  against allowed values . 
+Text-to-SQL Pipeline
+To handle structured data queries, the agent uses a Text-to-SQL workflow. The LLM (Gemini) is prompted to
+generate a SQL query based on the user’s natural language. The system then executes this query in
+PostgreSQL. For reliability, follow a robust loop: if execution fails (e.g. syntax or type error), capture the
+error message and have the LLM reason about and fix the SQL. Arslan Shahid recommends a three-part
+approach: (1) SQL-Agent generates initial query, (2) Error-Reasoning-Agent diagnoses failures, (3) Error-Fix-
+Agent corrects the query . In practice, you prompt the model with the schema and error context to retry
+until success. Aim for >95% first-pass accuracy in SQL generation . Always use parameterized queries or
+1
+2
+3 1
+• 
+4
+• 
+5
+• 
+6
+•  6
+1
+•  6
+• 
+• 
+2
+7
+8
+1
+ORM   tools   to   avoid   injection   (as   Real   Python   notes,   “prevent   Python   SQL   injection   using   query
+parameters” ). Additionally, preprocess the prompt with database schema and include tools in Agno (e.g.
+an  agno.tools.sql.SQLTools  instance pointing at your DB) so the agent can execute SQL directly .
+Example workflow:
+from agno.agent import Agent
+from agno.tools.sql import SQLTools
+sql_tool = SQLTools(db_url="postgresql://user:pass@localhost:5432/mydb")
+agent = Agent(
+model=Gemini(id="your-gemini-model"),
+tools=[sql_tool],
+instructions=["Use only SELECT queries on allowed tables."],
+)
+After generation and execution, present results or errors back to the LLM for iterative refinement. This
+closed-loop helps catch mistakes, matching the “robust text-to-SQL” pattern described in industry guides
+.
+RAG (Retrieval-Augmented Generation) Pipeline
+For unstructured data, the agent implements a RAG pipeline. Documents (e.g. knowledge base articles,
+PDFs) are preprocessed and indexed in Chroma (a vector database). At query time, the agent embeds the
+user question (using the LLM’s encoder or a shared embedding model) and performs a similarity search in
+Chroma. Relevant document chunks are retrieved and fed, along with the query, into the LLM. For example,
+Haystack shows how to build a Chroma-backed RAG: after pushing docs into a  ChromaDocumentStore ,
+you use a  ChromaRetriever  to fetch context, then generate answers . In code, one might initialize a
+retriever like:
+from haystack.document_stores import ChromaDocumentStore
+from haystack.nodes import DensePassageRetriever
+doc_store = ChromaDocumentStore(persist_directory="chroma_store")
+retriever = DensePassageRetriever(document_store=doc_store,
+embedding_model="gemini-embedding")
+Then for each query: get top-k passages and run the LLM in a QA chain. This aligns with Agno’s vector-tool
+support. For structured data with semantic search, you can even combine SQL and vector queries: for
+example, using  FULL OUTER JOIN  to merge results from a text search and a vector similarity search on
+pgvector columns . This “hybrid query” approach yields both keyword matches and semantically related
+rows in one query . The key is to fuse relational and similarity search – after retrieving relevant records,
+feed them to Gemini for final answer generation. 
+9
+1
+7
+10
+11
+11
+2
+
+
+
+5
+ 
+Austyn Labs  May 19, 2025 
+Guide  Classification: PUBLIC AAA 
+ 
+AI Agent Hackathon 
+Syngenta at Paradox 2025 
+Handbook  
+ 
+AI Agent Hackathon 2 
+ 
+Table of Contents 
+Syngenta AI Agent Hackathon  3 
+1. Timeline  3 
+2. Registration  3 
+3. Challenge Overview  4 
+4. Technical Requirements  4 
+4.1 Functional Requirements  4 
+4.2 Non-Functional Requirements  5 
+4.3 Technology Stack  5 
+5. Business Scenarios  6 
+5.1 Document-Based Query  6 
+5.2 Data-Based Query  6 
+5.3 Hybrid Query  7 
+5.4 Permission-Restricted Query  7 
+6. Governance & Access Control  8 
+6.1 Geographic Access Control  8 
+6.2 Role-Based Access Control (RBAC)  9 
+7. Dataset  9 
+7.1 Supply Chain Database  9 
+7.2 Document Repository  9 
+7.3 Sample Questions  11 
+8. Evaluation  12 
+8.1 Business Value (60%)  12 
+8.2 Technical Execution (40%)  12 
+9. Submission  13 
+9.1 Video Presentation  13 
+9.2 Code Submission  14 
+10. Questions and Contact Information  14 
+ 
+ 
+AI Agent Hackathon 3 
+ 
+Syngenta AI Agent Hackathon 
+Welcome  to  the  AI  Agent  Hackathon.  This  event  challenges  you  to  create  intelligent  agent 
+applications  to  improve  supply  chain  operations  using  AI.  This  handbook  provides  guidance  to 
+help you develop a good solution that meets all requirements. 
+ 
+This hackathon invites participants to design advanced AI applications that enhance supply chain 
+operations. Your solution will link document repositories with database systems, ensuring proper 
+governance and access controls. Participants will have the opportunity to showcase their 
+technical  skills  in  creating  practical  AI  solutions  for  business  benefits.  Successful  participants 
+may receive recognition and interview opportunities for Data Scientist positions at Syngenta. 
+ 
+1.  Timeline 
+•  Start Date: May 19, 2025 
+•  Final Submission Deadline: May 25, 2025 
+ 
+Finalists are expected to be announced approximately 5 to 7 days after the final submission 
+deadline.  
+ 
+All deadlines are at 11:59 PM IST on the corresponding day unless otherwise noted. Syngenta 
+reserve the right to update the contest timeline if we deem it necessary.  
+ 
+2.  Registration 
+ 
+Team Size: 1-4 participants 
+Institution: Only students from IITM BS Degree are eligible to participate 
+ 
+How to Register: 
+-  Form your team (1-4 members) 
+-  Submit registration via Syngenta AI Agent Hackathon Registration 
+-  Registration deadline: May 20, 2025 11:59PM IST 
+-  Each participant may join only one team 
+ 
+AI Agent Hackathon 5 
+ 
+•  Governance Enforcement: Ensure users access the correct information by applying 
+access-control frameworks and clearly explaining any restrictions. 
+ 
+•  Insight Generation: Turn raw data into useful insights through contextual analysis, 
+identifying trends, and comparing information. Graphical visualizations would be a nice-to-
+have feature. 
+ 
+•  Memory: The application should support short-term memory for subsequent questions in a 
+chat, allowing it to remember context and provide coherent answers. Having long-term 
+memory for retaining user preferences and interactions would be a nice-to-have feature. 
+ 
+4.2  Non-Functional Requirements 
+ 
+•  Performance: The application should provide real-time responses with minimal latency and 
+optimized token usage, ensuring a smooth user experience.  
+ 
+•  Security: Robust security measures should be in place to protect sensitive and PII to ensure 
+compliance with data protection regulations. 
+ 
+•  Usability: The user interface should be intuitive and user-friendly, making it easy for users 
+to interact with the application and access the information they need. 
+ 
+•  Maintainability: It would be nice to have a system designed for easy maintenance and 
+updates, allowing for the addition of new features and improvements over time. 
+ 
+4.3  Technology Stack 
+ 
+We encourage all participants to freely explore and choose their preferred tech stack. Your 
+submission will be evaluated on creativity, innovation, and the effectiveness of your solution, 
+not the specific tools you use. 
+Below are some commonly used technologies across different components of the application. 
+You’re welcome to go beyond these suggestions: 
+ 
+API: FastAPI^, NextJS, Flask, Fastify, Hono, Express.js 
+Frontend: NextJS^, VueJS, React 
+Database: Postgres^, MySQL, Oracle 
+AI/Agent Frameworks: Langchain^, AI SDK^, LlamaIndex 
+Large Language Models (LLM): GPT 4.1^, Claude 3.5 Sonnet^, Claude 3.7 Sonnet^, Llama 3.1 
+Embedding Models: Embed 4^, text-embedding-3-large 
+ 
+ 
+AI Agent Hackathon 6 
+ 
+^ These tools/models are either recommended or have special support (e.g., credits or access) for this hackathon. 
+ 
+All participants will receive API credits and access to OpenAI's GPT-4o for use during the 
+hackathon. You're also welcome to use other models and providers — including open-source or 
+hosted solutions — as long as your application meets the requirements. 
+ 
+More details on model access will be shared during the kick-off call. 
+5. Business Scenarios 
+This section illustrates real-world questions that users might ask the AI-powered application 
+during supply chain operations. Each scenario demonstrates how the system should behave 
+when handling queries involving documents, databases, or a mix of both—while also respecting 
+organizational policies like access control. These examples are designed to help participants 
+understand the range of use cases, system expectations, and how business logic can be 
+operationalized through intelligent agents. 
+5.1  Document-Based Query 
+User Query: “ What is our company policy on inventory write -offs?” 
+ 
+The system should interpret that the user needs information from internal policy documents. It 
+must: 
+ 
+-  Locate relevant policy documents. 
+-  Extract the section covering inventory write-offs. 
+-  Summarize the answer with references to the original content. 
+-  Optionally, provide more detailed excerpts if the user asks. 
+ 
+ 
+5.2  Data-Based Query 
+User Query: "How much inventory do we currently have in the Southwest region?" 
+ 
+The system should: 
+ 
+-  Understand that this requires live data retrieval. 
+-  Generate the correct SQL query to fetch inventory filtered by region. 
+-  Run the query and return results in plain, human-readable form. 

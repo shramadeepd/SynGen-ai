@@ -11,7 +11,12 @@ import datetime
 # -------------------------------
 # DATABASE & SESSION SETUP
 # -------------------------------
-DATABASE_URL = "postgres://neondb_owner:npg_f9UzQpMWc3Dr@ep-plain-wind-a1hcrp8w-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://syngen_user:syngen_password@localhost:5432/syngen_ai")
 
 engine = create_engine(
     DATABASE_URL,
